@@ -1,41 +1,45 @@
-/**
- * Licensed to the Apache Software Foundation (ASF) under one
- * or more contributor license agreements.  See the NOTICE file
- * distributed with this work for additional information
- * regarding copyright ownership.  The ASF licenses this file
- * to you under the Apache License, Version 2.0 (the
- * "License"); you may not use this file except in compliance
- * with the License.  You may obtain a copy of the License at
- *
- *   http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing,
- * software distributed under the License is distributed on an
- * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
- * KIND, either express or implied.  See the License for the
- * specific language governing permissions and limitations
- * under the License.
- */
+#include <Wire.h>
 
-int pushButton = 2;
-int count;
+#define LOG_PERIOD 30000  //Logging period in ms
+#define MAX_PERIOD 60000  //Maximum logging period without modifying
 
+volatile unsigned long counts;     //variable for GM Tube events
+unsigned long cpm;        //variable for CPM
+
+unsigned int multiplier = MAX_PERIOD / LOG_PERIOD;  //variable for calculation CPM 
+
+unsigned long previousMillis;  //variable for time measurement
 
 void setup() {
-  // initialize serial communication at 9600 bits per second:
+  Wire.begin(); // join i2c bus (address optional for master)
+    counts = 0;
+  cpm = 151;
+  multiplier = MAX_PERIOD / LOG_PERIOD;      //calculating multiplier
   Serial.begin(9600);
-  // make the pushbutton's pin an input:
-  pinMode(pushButton, INPUT);
-  count=0;
+  attachInterrupt(0, tube_impulse, FALLING); //define external interrupts
 }
 
+byte x = 0;
 
 void loop() {
-  int buttonState = digitalRead(pushButton);
-  if (buttonState == HIGH) {     
-      count++;
-      delay(150);
-  } 
-  Serial.println(count);
-  delay(1);        
+
+    unsigned long currentMillis = millis();
+  if(currentMillis - previousMillis > LOG_PERIOD)  // LOG_PERIOD = 30 seconds
+  {
+    previousMillis = currentMillis;
+    cpm = counts * multiplier;// counts for 30- seconds * 2 = cpm
+    Wire.beginTransmission(8); // transmit to device        
+    Wire.write(cpm);              
+    Wire.endTransmission();    // stop transmitting
+    counts = 0;        
+  }
+  
 }
+
+
+void tube_impulse(){       
+  counts++;
+}
+
+
+
