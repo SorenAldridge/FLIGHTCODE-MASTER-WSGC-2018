@@ -20,4 +20,7 @@
 #ifndef SYSTEM_H
 #define SYSTEM_H
 
+//key used for I2C Mega->Nano preflight check
+final unsigned long HANDSHAKE_KEY = 0x3bd10814;
+
 #endif

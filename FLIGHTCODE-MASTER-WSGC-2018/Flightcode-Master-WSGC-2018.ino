@@ -17,13 +17,39 @@
  * under the License.
  */
 
+#include "System.h"
 #include "preFlightCheck.cpp"
 
 void init(){
+    //initialize I2C bus
+    Wire.begin()
+    //initialize serial bus
     Serial.begin(9600);
+    //perform I2C handshake procedure
     I2CHandshake();
 }
 
 void loop(){
     
+}
+
+bool I2CHandshake(){
+    bool handshake;
+    Serial.println("PERFORMING I2C HANDSHAKE TEST/n/r"////Mega_MASTER->Nano_SLAVE/r/n);
+    Wire.requestFrom(8,1);
+    while(Wire.available()){
+      if(Wire.read == HANDSHAKE_KEY){
+        Serial.println("Key Found");
+        handshake = true;
+      }
+      else{
+        Serial.println("Key Not Found");
+        handshake = false;
+      }
+    }
+    
+    //echo over i2c to nano and listen for return
+    //time delay? for handshake. true for complete false for no handshake
+    
+    return handshake;
 }

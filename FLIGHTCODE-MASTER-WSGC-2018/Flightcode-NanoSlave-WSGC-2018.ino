@@ -10,15 +10,24 @@ unsigned int multiplier = MAX_PERIOD / LOG_PERIOD;  //variable for calculation C
 
 unsigned long previousMillis;  //variable for time measurement
 
+final unsigned long HANDSHAKE_KEY = 0x3bd10814;
+
 void setup() {
   pinMode(2, INPUT); 
   //attachInterrupt(digitalPinToInterrupt(2), tube, FALLING);
   Wire.begin(8);                // join i2c bus with address #8
-  Wire.onRequest(requestEvent); // register event
+  Wire.onRequest()  
   counts = 0;
   cpm = 0;
   Serial.begin(9600);
-  
+
+  //added by Soren
+  Serial.println("Sending Handshake Key");
+  Wire.write(HANDSHAKE_KEY);
+  delay(10000);
+  Serial.println("End Handshake Sequence");
+
+  Wire.onRequest(requestEvent);
 }
 
 void loop() {
@@ -43,9 +52,12 @@ void loop() {
 // this function is registered as an event, see setup()
 void requestEvent() {
   Wire.write(cpm); // respond with message of 6 bytes
-
 }
 
+//used for confirmation of communication -added by soren
+void sendHandshakeKey(){
+  Wire.write(HANDSHAKE_KEY);
+}
 
 void tube(){       
   counts+1;
