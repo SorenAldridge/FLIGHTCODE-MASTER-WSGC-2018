@@ -21,6 +21,6 @@ bool I2CHandshake(){
     bool handshake;
     //echo over i2c to nano and listen for return
     //time delay? for handshake. true for complete false for no handshake
-    Serial.println("yeet");
+    Serial.println("PERFORMING I2C HANDSHAKE TEST/n/r"////Mega_MASTER->Nano_SLAVE/r/n);
     return handshake;
 }

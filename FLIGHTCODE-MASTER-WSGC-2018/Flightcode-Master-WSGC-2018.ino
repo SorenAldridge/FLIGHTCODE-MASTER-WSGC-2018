@@ -20,6 +20,7 @@
 #include "preFlightCheck.cpp"
 
 void init(){
+    Serial.begin(9600);
     I2CHandshake();
 }
 
