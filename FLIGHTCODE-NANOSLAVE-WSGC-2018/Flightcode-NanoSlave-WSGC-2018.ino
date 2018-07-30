@@ -10,13 +10,13 @@ unsigned int multiplier = MAX_PERIOD / LOG_PERIOD;  //variable for calculation C
 
 unsigned long previousMillis;  //variable for time measurement
 
-final unsigned long HANDSHAKE_KEY = 0x3bd10814;
+unsigned long HANDSHAKE_KEY = 0x3bd10814;
 
 void setup() {
   pinMode(2, INPUT); 
   //attachInterrupt(digitalPinToInterrupt(2), tube, FALLING);
   Wire.begin(8);                // join i2c bus with address #8
-  Wire.onRequest()  
+  Wire.onRequest(sendHandshakeKey);  
   counts = 0;
   cpm = 0;
   Serial.begin(9600);
