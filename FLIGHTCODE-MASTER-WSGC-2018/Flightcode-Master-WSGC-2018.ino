@@ -21,11 +21,10 @@
 #include <Wire.h>
 
 void setup(){
-    pinMode(2, OUTPUT);
-    analogWrite(2, 255);
+    hardwareSetup();
+
+   
     
-    pinMode(NANO_RST, OUTPUT);
-    digitalWrite(NANO_RST, HIGH);
     //initialize I2C bus
     Wire.begin();
     //initialize serial bus
@@ -36,7 +35,17 @@ void setup(){
 }
 
 void loop(){
-    
+        digitalWrite(GREEN_LED, HIGH);
+}
+
+void hardwareSetup(){
+    //Pin Config for Nano Reset
+    pinMode(NANO_RST, OUTPUT);
+    digitalWrite(NANO_RST, HIGH);
+
+    //Pin Config for Pre-Flightcheck Board
+    pinMode(GREEN_LED, OUTPUT);
+    pinMode(2, OUTPUT);
 }
 
 //performs pre-flight check for I2C connection on the nano
@@ -63,6 +72,8 @@ bool NanoI2CHandshake(){
       if(read == HANDSHAKE_KEY){
         Serial.println("Key Found");
         handshake = true;
+        tone(2, 400, 500);
+        digitalWrite(50, HIGH);
         break;
       }
       else{
@@ -77,3 +88,8 @@ bool NanoI2CHandshake(){
     
     return handshake;
 }
+
+void buzz(){
+    tone(13, 250, 250);
+}
+
