@@ -104,7 +104,7 @@ void logData() {
   file.println();
 }
 //------------------------------------------------------------------------------
-void setup() {
+void logSetup() {
   const uint8_t BASE_NAME_SIZE = sizeof(FILE_BASE_NAME) - 1;
   char fileName[13] = FILE_BASE_NAME "00.csv";
 
@@ -166,7 +166,7 @@ void setup() {
   logTime *= 1000UL*SAMPLE_INTERVAL_MS;
 }
 //------------------------------------------------------------------------------
-void loop() {
+void logLoop() {
   // Time for next record.
   logTime += 1000UL*SAMPLE_INTERVAL_MS;
 

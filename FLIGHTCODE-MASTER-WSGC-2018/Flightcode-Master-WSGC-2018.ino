@@ -18,11 +18,11 @@
  */
 
 #include "System.h"
-#include "preFlightCheck.cpp"
+#include <Wire.h>
 
-void init(){
+void setup(){
     //initialize I2C bus
-    Wire.begin()
+    Wire.begin();
     //initialize serial bus
     Serial.begin(9600);
     //perform I2C handshake procedure
@@ -35,10 +35,12 @@ void loop(){
 
 bool I2CHandshake(){
     bool handshake;
-    Serial.println("PERFORMING I2C HANDSHAKE TEST/n/r"////Mega_MASTER->Nano_SLAVE/r/n);
-    Wire.requestFrom(8,1);
+    Serial.println("PERFORMING I2C HANDSHAKE TEST/n/r////Mega_MASTER->Nano_SLAVE/r/n");
+    Wire.requestFrom(8,4);
     while(Wire.available()){
-      if(Wire.read == HANDSHAKE_KEY){
+      unsigned long read = Wire.read();
+      Serial.println(read);
+      if(read == HANDSHAKE_KEY){
         Serial.println("Key Found");
         handshake = true;
       }

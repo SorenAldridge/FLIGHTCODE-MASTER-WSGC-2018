@@ -56,7 +56,9 @@ void requestEvent() {
 
 //used for confirmation of communication -added by soren
 void sendHandshakeKey(){
+  Wire.beginTransmission();
   Wire.write(HANDSHAKE_KEY);
+  Wire.endTransmission();
 }
 
 void tube(){       
