@@ -23,4 +23,6 @@
 //key used for I2C Mega->Nano preflight check
 unsigned long HANDSHAKE_KEY = 0x3b;
 
+int NANO_RST = 53;
+
 #endif

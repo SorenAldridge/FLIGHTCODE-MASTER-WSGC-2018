@@ -21,26 +21,42 @@
 #include <Wire.h>
 
 void setup(){
+    pinMode(NANO_RST, OUTPUT);
+    digitalWrite(NANO_RST, HIGH);
     //initialize I2C bus
     Wire.begin();
     //initialize serial bus
     Serial.begin(9600);
-    delay(500);
     //perform I2C handshake procedure
-    I2CHandshake();
+    NanoI2CHandshake();
+    Serial.println("Handshake Complete");
 }
 
 void loop(){
     
 }
 
-bool I2CHandshake(){
+//performs pre-flight check for I2C connection on the nano
+bool NanoI2CHandshake(){
     bool handshake;
-    Serial.println("PERFORMING I2C HANDSHAKE TEST/n/r////Mega_MASTER->Nano_SLAVE/r/n");
-    Wire.requestFrom(8, 10);
+    //Console Feedback
+    Serial.println("////PERFORMING I2C HANDSHAKE TEST////\n\r//////MASTER(Mega)->SLAVE(Nano)//////\r\n");
+    //Reset Nano into test sequence and wait for startup
+    Serial.println("Nano Wait");
+    digitalWrite(NANO_RST, LOW);
+    delay(1);
+    digitalWrite(NANO_RST, HIGH);
+    delay(2000);
+    
+    //Request One Byte
+    Wire.requestFrom(8, 1);
+    //Run until available
     while(Wire.available()){
+      //get received value
       unsigned long read = Wire.read();
       Serial.println(read);
+
+      //if keys match, break out of loop
       if(read == HANDSHAKE_KEY){
         Serial.println("Key Found");
         handshake = true;
