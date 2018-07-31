@@ -25,6 +25,7 @@ void setup(){
     Wire.begin();
     //initialize serial bus
     Serial.begin(9600);
+    delay(500);
     //perform I2C handshake procedure
     I2CHandshake();
 }
@@ -36,18 +37,20 @@ void loop(){
 bool I2CHandshake(){
     bool handshake;
     Serial.println("PERFORMING I2C HANDSHAKE TEST/n/r////Mega_MASTER->Nano_SLAVE/r/n");
-    Wire.requestFrom(8,4);
+    Wire.requestFrom(8, 10);
     while(Wire.available()){
       unsigned long read = Wire.read();
       Serial.println(read);
       if(read == HANDSHAKE_KEY){
         Serial.println("Key Found");
         handshake = true;
+        break;
       }
       else{
         Serial.println("Key Not Found");
         handshake = false;
       }
+      delay(100);
     }
     
     //echo over i2c to nano and listen for return

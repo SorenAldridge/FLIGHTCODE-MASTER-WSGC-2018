@@ -10,7 +10,7 @@ unsigned int multiplier = MAX_PERIOD / LOG_PERIOD;  //variable for calculation C
 
 unsigned long previousMillis;  //variable for time measurement
 
-unsigned long HANDSHAKE_KEY = 0x3bd10814;
+unsigned long HANDSHAKE_KEY = 0x3b;
 
 void setup() {
   pinMode(2, INPUT); 
@@ -56,9 +56,9 @@ void requestEvent() {
 
 //used for confirmation of communication -added by soren
 void sendHandshakeKey(){
-  Wire.beginTransmission();
+ // Wire.beginTransmission();
   Wire.write(HANDSHAKE_KEY);
-  Wire.endTransmission();
+ // Wire.endTransmission();
 }
 
 void tube(){       
