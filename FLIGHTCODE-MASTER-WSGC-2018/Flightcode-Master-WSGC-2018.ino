@@ -21,6 +21,9 @@
 #include <Wire.h>
 
 void setup(){
+    pinMode(2, OUTPUT);
+    analogWrite(2, 255);
+    
     pinMode(NANO_RST, OUTPUT);
     digitalWrite(NANO_RST, HIGH);
     //initialize I2C bus

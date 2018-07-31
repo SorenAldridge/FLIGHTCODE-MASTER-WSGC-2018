@@ -24,7 +24,7 @@ void setup() {
   //added by Soren
   Serial.println("Sending Handshake Key");
   Wire.write(HANDSHAKE_KEY);
-  delay(5000);
+  delay(2000);
   Serial.println("End Handshake Sequence");
 
   Wire.onRequest(requestEvent);
