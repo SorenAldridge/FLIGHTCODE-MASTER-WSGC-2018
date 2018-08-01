@@ -20,13 +20,36 @@
 #ifndef SYSTEM_H
 #define SYSTEM_H
 
+#include <Adafruit_AMG88xx.h>
+#include <Servo.h>
+
 //key used for I2C Mega->Nano preflight check
 unsigned long HANDSHAKE_KEY = 0x3b;
 
 //PINS
 int NANO_RST = 53;
 
-//LEDS
+//PREFLIGHT CHECKS
 int GREEN_LED = 52;
+int RED_LED = 51;
+int BLUE_LED = 50;
+int WHITE_LED = 49;
+int YELLOW_LED = 48;
+int PIEZO = 2;
+
+//SPACEFIRE
+Adafruit_AMG88xx amg;
+Servo myservo;
+
+float pixels[AMG88xx_PIXEL_ARRAY_SIZE];
+int SpyCamera = 4;
+int altitude;
+int servoPosition = 35;
+int servoincrement = 35;
+int pos = 0; 
+int SERVO_PIN = 999999;
+
+//I2C ADDRESSES
+int NANO = 8;
 
 #endif

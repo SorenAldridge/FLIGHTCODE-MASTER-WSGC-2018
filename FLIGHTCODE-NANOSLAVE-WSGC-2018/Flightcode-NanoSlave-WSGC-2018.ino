@@ -22,11 +22,11 @@ void setup() {
   Serial.begin(9600);
 
   //added by Soren
-  Serial.println("Sending Handshake Key");
+  Serial.println("Transmit Handshake Key");
   Wire.write(HANDSHAKE_KEY);
   delay(2000);
-  Serial.println("End Handshake Sequence");
-
+ 
+  Serial.println("End Handshake Transmission");
   Wire.onRequest(requestEvent);
 }
 
@@ -52,6 +52,7 @@ void loop() {
 // this function is registered as an event, see setup()
 void requestEvent() {
   Wire.write(cpm); // respond with message of 6 bytes
+  Serial.println("REQUEST | " +(String)cpm);
 }
 
 //used for confirmation of communication -added by soren
