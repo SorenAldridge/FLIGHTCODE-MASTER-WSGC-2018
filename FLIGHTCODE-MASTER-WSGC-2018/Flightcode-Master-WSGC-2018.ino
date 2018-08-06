@@ -27,6 +27,8 @@
 #include "Adafruit_BME680.h"
 #include "Adafruit_SGP30.h"
 
+RTC_PCF8523 RTC;  
+
 void setup() {
   Serial.begin(9600);
   Serial.println(">>>>>>WSGC HIGH-ALTITUDE BALLOON PAYLOAD 2018<<<<<<");
@@ -34,37 +36,25 @@ void setup() {
   Serial.println(">>>>Performing System Checks<<<<");
   hardwareSetup();
   //initialize I2C bus
-  Wire.begin();
-  //initialize serial bus
-  
+  Wire.begin(); 
   //perform I2C handshake procedure
   NanoI2CHandshake();
   Serial.println("> (1/5) Nano Handshake Complete");
   atmosphericSetup();
   spaceFireSetup();
-}
 
-void loop() {
-  Wire.requestFrom(NANO, 4);
-  Serial.print("Geiger: ");
-  Serial.println(Wire.read());
-  delay(500);
-  runAtmosphere();
-  runSpaceFire();
+  //SYNC RTC CLOCK
+  RTC.adjust(DateTime(F(__DATE__), F(__TIME__)));
 }
 
 void hardwareSetup() {
   //Pin Config for Nano Reset
   pinMode(NANO_RST, OUTPUT);
   digitalWrite(NANO_RST, HIGH);
-
-  //Pin Config for Pre-Flightcheck Board
-  pinMode(GREEN_LED, OUTPUT);
-  pinMode(2, OUTPUT);
 }
 
 void spaceFireSetup() {
-  myservo.attach(SERVO_PIN);  // attaches the servo on pin 9 to the servo object
+  myservo.attach(SERVO_CTRL);  // attaches the servo on pin 9 to the servo object
   pinMode(SpyCamera, OUTPUT);
   bool status;
   // default settings
@@ -112,7 +102,7 @@ bool NanoI2CHandshake() {
   if (read == HANDSHAKE_KEY) {
     Serial.println("> Key Found");
     handshake = true;
-    tone(PIEZO, 400, 500);
+    tone(PIEZO, 222, 500);
     digitalWrite(BLUE_LED, HIGH);
   }
   else {
@@ -139,7 +129,7 @@ void getUVSensor() {
 #define ECHO_TO_SERIAL   1              // echo data to serial port
 #define FILE_BASE_NAME "Data"           // Log file base name.  Must be six characters or less.
 
-RTC_DS1307 RTC;                         // define the Real Time Clock object
+                       // define the Real Time Clock object
 
 uint32_t syncTime = 0;                  // time of last sync
 const int chipSelect = 10;              // for the data logging shield, we use digital pin 10 for the SD cs line
@@ -151,11 +141,13 @@ Adafruit_BME680 bme;  // I2C Object for BME680 Sensor
 Adafruit_SGP30 sgp;   // I2C Object for SGP30 Sensor
 
 //*************************** Define Analog Pins ****************************
-int CFC_Pin = 0;
-int Benzene_Pin = 1;
-int Ozone_Gas_Pin = 2;
-int Ozone_Ref_Pin = 3;
-int Ozone_Temp_Pin = 4;
+int CFC_Pin = 4;
+int Benzene_Pin = 5;
+int Ozone_Gas_Pin = 0;
+int Ozone_Ref_Pin = 1;
+int Ozone_Temp_Pin = 2;
+int Oxygen_Pin = 3;
+
 
 void logString(String toLog){
   logfile.print(toLog);
@@ -164,7 +156,7 @@ void logString(String toLog){
 
 String getAtmosphericData(){
   // DateTime object
-  DateTime now;
+  DateTime now = RTC.now();
   
   // Log milliseconds since starting
   uint32_t m = millis(); 
@@ -182,16 +174,15 @@ String getAtmosphericData(){
   float ozoneGas = analogRead(Ozone_Gas_Pin);
   float ozoneRef = analogRead(Ozone_Ref_Pin);
   float ozoneTemp = analogRead(Ozone_Temp_Pin);
-
-  // Fetch the time
-  now = RTC.now();
+  float oxygenReading = analogRead(Oxygen_Pin);
+  
 
   // Guess what BA means
-  String BAString = String(m) + ", " + String(now.unixtime()) + ", " + String(now.year()); + "/" + String(now.month()) + "/" + String(now.day()) + " " + 
+  String BAString = String(m) + ", " + String(now.unixtime()) + ", " + String(now.year()) + "/" + String(now.month()) + "/" + String(now.day()) + " " + 
                     String(now.hour()) + ":" + String(now.minute()) + ":" + String(now.second()) + ", "+ String(temp) + ", " + String(pressure) + ", " + 
                     String(humidity) + ", " + String(gas_resistance) + ", " + String(altitude) + ", " + String(TVOC) + ", " + String(eCO2) + ", " + 
-                    String(CFC_reading) + ", " + String(Benzene_reading) + ", " + String(ozoneGas) + ", " + String(ozoneRef) + ", " + String(ozoneTemp);
-
+                    String(CFC_reading) + ", " + String(Benzene_reading) + ", " + String(ozoneGas) + ", " + String(ozoneRef) + ", " + String(ozoneTemp) + ", " + String(oxygenReading);
+ 
   return BAString;
 }
 
@@ -221,8 +212,9 @@ bool BMEstartup(){
 }
 
 bool SGPstartup(){
-  if (!sgp.begin())
+  if (!sgp.begin()){
     return false;
+  }
   else 
     return true;
 }
@@ -231,8 +223,9 @@ bool RTCstartup(){
   Wire.begin();  
   if (!RTC.begin())
     return false;
-  else 
+  else{ 
     return true;
+  }
 }
 
 bool fileSetup(){
@@ -303,22 +296,32 @@ void atmosphericSetup() {
 
   initLogTime();
   initBME();
-  
-  logString("Millis,Stamp,Datetime,Temperature,Pressure,Humidity,Gas,Approx. Altitude,TVOC,eCO2,CFC,Benzene,Ozone Gas,Ozone Ref,Ozone Temp");    
+  Serial.println("Millis,Stamp,Datetime,Temperature,Pressure,Humidity,Gas,Approx. Altitude,TVOC,eCO2,CFC,Benzene,Ozone Gas,Ozone Ref,Ozone Temp,Oxygen");
+  logString("Millis,Stamp,Datetime,Temperature,Pressure,Humidity,Gas,Approx. Altitude,TVOC,eCO2,CFC,Benzene,Ozone Gas,Ozone Ref,Ozone Temp,Oxygen");    
 }
 
-void runAtmosphere() {
+void loop() {
   // delay for the amount of time we want between readings
   delay((LOG_INTERVAL -1) - (millis() % LOG_INTERVAL));
 
   String str = getAtmosphericData();
   logString(str);
   
+  Wire.requestFrom(NANO, 4);
+  Serial.print("> Geiger: ");
+  Serial.println(Wire.read());
+  
+  Serial.println(getAtmosphericData());
+  //runAtmosphere();
+  //runSpaceFire();
+
   // Now we write data to disk! Don't sync too often - requires 2048 bytes of I/O to SD card
   // which uses a bunch of power and takes time
   if ((millis() - syncTime) < SYNC_INTERVAL) return;
   syncTime = millis();
 }
+
+
 
 
 

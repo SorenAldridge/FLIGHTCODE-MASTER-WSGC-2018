@@ -27,14 +27,14 @@
 unsigned long HANDSHAKE_KEY = 0x3b;
 
 //PINS
-int NANO_RST = 53;
+int NANO_RST = 31;
 
 //PREFLIGHT CHECKS
-int GREEN_LED = 52;
-int RED_LED = 51;
-int BLUE_LED = 50;
-int WHITE_LED = 49;
-int YELLOW_LED = 48;
+int BLUE_LED = 38;
+int WHITE_LED = 39;
+int RED_LED = 40;
+int YELLOW_LED = 41;
+int GREEN_LED = 42;
 int PIEZO = 2;
 
 //SPACEFIRE
@@ -44,10 +44,15 @@ Servo myservo;
 float pixels[AMG88xx_PIXEL_ARRAY_SIZE];
 int SpyCamera = 4;
 int altitude;
-int servoPosition = 35;
-int servoincrement = 35;
+int servoPosition = 0;
+int servoincrement = 40;
 int pos = 0; 
-int SERVO_PIN = 999999;
+int SERVO_CTRL = 22;
+
+int NICHROME_RELAY_1 = 23;
+int NICHROME_RELAY_2 = 24;
+int NICHROME_RELAY_3 = 25;
+int NICHROME_RELAY_4 = 26;
 
 //I2C ADDRESSES
 int NANO = 8;
