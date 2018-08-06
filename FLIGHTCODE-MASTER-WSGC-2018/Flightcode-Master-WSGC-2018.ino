@@ -28,6 +28,7 @@
 #include "Adafruit_SGP30.h"
 
 RTC_PCF8523 RTC;  
+DateTime now;
 
 void setup() {
   Serial.begin(9600);
@@ -45,6 +46,12 @@ void setup() {
 
   //SYNC RTC CLOCK
   RTC.adjust(DateTime(F(__DATE__), F(__TIME__)));
+  now = RTC.now();
+  if (! RTC.begin()) {
+    Serial.println("Couldn't find RTC");
+    while (1);
+  }
+  
 }
 
 void hardwareSetup() {
@@ -123,7 +130,7 @@ void getUVSensor() {
   Serial.println(voltage);
 }
 
-#define SEALEVELPRESSURE_HPA (1013.25)  // change this number based upon the forcast that day
+#define SEALEVELPRESSURE_HPA (1015.1)  // change this number based upon the forcast that day
 #define LOG_INTERVAL  1000              // mills between entries
 #define SYNC_INTERVAL 1000              // mills between calls to flush() - to write data to the card
 #define ECHO_TO_SERIAL   1              // echo data to serial port
@@ -156,8 +163,8 @@ void logString(String toLog){
 
 String getAtmosphericData(){
   // DateTime object
-  DateTime now = RTC.now();
-  
+  now = RTC.now();
+
   // Log milliseconds since starting
   uint32_t m = millis(); 
 
@@ -310,10 +317,12 @@ void loop() {
   Wire.requestFrom(NANO, 4);
   Serial.print("> Geiger: ");
   Serial.println(Wire.read());
-  
+
+  Serial.print("> Altitude: ");
+  Serial.println(getAltitude());
+ 
   Serial.println(getAtmosphericData());
-  //runAtmosphere();
-  //runSpaceFire();
+
 
   // Now we write data to disk! Don't sync too often - requires 2048 bytes of I/O to SD card
   // which uses a bunch of power and takes time
