@@ -280,6 +280,24 @@ void initBME(){
   bme.setGasHeater(320, 150); // 320*C for 150 ms
 }
 
+
+void initSGP(){
+  Serial.begin(9600);
+  Serial.println("SGP30 test");
+
+  if (! sgp.begin()){
+    Serial.println("Sensor not found :(");
+    while (1);
+  }
+  Serial.print("Found SGP30 serial #");
+  Serial.print(sgp.serialnumber[0], HEX);
+  Serial.print(sgp.serialnumber[1], HEX);
+  Serial.println(sgp.serialnumber[2], HEX);
+
+  // If you have a baseline measurement from before you can assign it to start, to 'self-calibrate'
+  //sgp.setIAQBaseline(0x8E68, 0x8F41);  // Will vary for each sensor!
+}
+
 void atmosphericSetup() {
   if(BMEstartup()){
     // Ready to go (Do something with LED)
