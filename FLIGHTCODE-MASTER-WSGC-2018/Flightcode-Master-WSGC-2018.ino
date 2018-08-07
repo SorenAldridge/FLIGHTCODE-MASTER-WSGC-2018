@@ -27,7 +27,7 @@
 #include "Adafruit_BME680.h"
 #include "Adafruit_SGP30.h"
 
-RTC_PCF8523 RTC;  
+RTC_PCF8523 RTC;
 DateTime now;
 
 void setup() {
@@ -37,7 +37,7 @@ void setup() {
   Serial.println(">>>>Performing System Checks<<<<");
   hardwareSetup();
   //initialize I2C bus
-  Wire.begin(); 
+  Wire.begin();
   //perform I2C handshake procedure
   NanoI2CHandshake();
   Serial.println("> (1/5) Nano Handshake Complete");
@@ -45,13 +45,8 @@ void setup() {
   spaceFireSetup();
 
   //SYNC RTC CLOCK
-  RTC.adjust(DateTime(F(__DATE__), F(__TIME__)));
   now = RTC.now();
-  if (! RTC.begin()) {
-    Serial.println("Couldn't find RTC");
-    while (1);
-  }
-  
+
 }
 
 void hardwareSetup() {
@@ -103,7 +98,7 @@ bool NanoI2CHandshake() {
   Wire.requestFrom(NANO, 1);
   //get received value
   unsigned long read = Wire.read();
-  Serial.println("> KEY: "+ (String)read);
+  Serial.println("> KEY: " + (String)read);
 
   //if keys match, break out of loop
   if (read == HANDSHAKE_KEY) {
@@ -136,7 +131,7 @@ void getUVSensor() {
 #define ECHO_TO_SERIAL   1              // echo data to serial port
 #define FILE_BASE_NAME "Data"           // Log file base name.  Must be six characters or less.
 
-                       // define the Real Time Clock object
+// define the Real Time Clock object
 
 uint32_t syncTime = 0;                  // time of last sync
 const int chipSelect = 10;              // for the data logging shield, we use digital pin 10 for the SD cs line
@@ -156,19 +151,19 @@ int Ozone_Temp_Pin = 2;
 int Oxygen_Pin = 3;
 
 
-void logString(String toLog){
+void logString(String toLog) {
   logfile.print(toLog);
   logfile.println();
 }
 
-String getAtmosphericData(){
+String getAtmosphericData() {
   // DateTime object
   now = RTC.now();
 
   // Log milliseconds since starting
-  uint32_t m = millis(); 
+  uint32_t m = millis();
 
-  // Read all sensors 
+  // Read all sensors
   float temp = bme.temperature;
   float pressure = bme.pressure;
   float humidity = bme.humidity;
@@ -182,103 +177,103 @@ String getAtmosphericData(){
   float ozoneRef = analogRead(Ozone_Ref_Pin);
   float ozoneTemp = analogRead(Ozone_Temp_Pin);
   float oxygenReading = analogRead(Oxygen_Pin);
-  
+
 
   // Guess what BA means
-  String BAString = String(m) + ", " + String(now.unixtime()) + ", " + String(now.year()) + "/" + String(now.month()) + "/" + String(now.day()) + " " + 
-                    String(now.hour()) + ":" + String(now.minute()) + ":" + String(now.second()) + ", "+ String(temp) + ", " + String(pressure) + ", " + 
-                    String(humidity) + ", " + String(gas_resistance) + ", " + String(altitude) + ", " + String(TVOC) + ", " + String(eCO2) + ", " + 
+  String BAString = String(m) + ", " + String(now.unixtime()) + ", " + String(now.year()) + "/" + String(now.month()) + "/" + String(now.day()) + " " +
+                    String(now.hour()) + ":" + String(now.minute()) + ":" + String(now.second()) + ", " + String(temp) + ", " + String(pressure) + ", " +
+                    String(humidity) + ", " + String(gas_resistance) + ", " + String(altitude) + ", " + String(TVOC) + ", " + String(eCO2) + ", " +
                     String(CFC_reading) + ", " + String(Benzene_reading) + ", " + String(ozoneGas) + ", " + String(ozoneRef) + ", " + String(ozoneTemp) + ", " + String(oxygenReading);
- 
+
   return BAString;
 }
 
-int getAltitude(){
+int getAltitude() {
   return bme.readAltitude(SEALEVELPRESSURE_HPA);
 }
 
-bool checkBME(){
+bool checkBME() {
   if (! bme.performReading())
     return false;
   else
     return true;
 }
 
-bool checkSGP(){
+bool checkSGP() {
   if (! sgp.IAQmeasure())
     return false;
   else
     return true;
 }
 
-bool BMEstartup(){
+bool BMEstartup() {
   if (!bme.begin())
     return false;
-  else 
+  else
     return true;
 }
 
-bool SGPstartup(){
-  if (!sgp.begin()){
+bool SGPstartup() {
+  if (!sgp.begin()) {
     return false;
   }
-  else 
+  else
     return true;
 }
 
-bool RTCstartup(){
-  Wire.begin();  
+bool RTCstartup() {
+  Wire.begin();
   if (!RTC.begin())
     return false;
-  else{ 
+  else {
     return true;
   }
 }
 
-bool fileSetup(){
+bool fileSetup() {
   bool didWork = true;
   const uint8_t BASE_NAME_SIZE = sizeof(FILE_BASE_NAME) - 1;
   char fileName[13] = FILE_BASE_NAME "00.csv";
-  
+
   // Initialize at the highest speed supported by the board that is not over 50 MHz. Try a lower speed if SPI errors occur.
   if (!sd.begin(chipSelect, SD_SCK_MHZ(50))) {
     sd.initErrorHalt();
   }
 
   // Find an unused file name.
-  if (BASE_NAME_SIZE > 6) 
+  if (BASE_NAME_SIZE > 6)
   {
     didWork = false;
   }
-  while (sd.exists(fileName)) 
+  while (sd.exists(fileName))
   {
-    if (fileName[BASE_NAME_SIZE + 1] != '9') 
+    if (fileName[BASE_NAME_SIZE + 1] != '9')
     {
       fileName[BASE_NAME_SIZE + 1]++;
     }
-    else if (fileName[BASE_NAME_SIZE] != '9') 
+    else if (fileName[BASE_NAME_SIZE] != '9')
     {
       fileName[BASE_NAME_SIZE + 1] = '0';
       fileName[BASE_NAME_SIZE]++;
-    } 
-    else 
+    }
+    else
     {
       didWork = false;
     }
   }
-  if (!logfile.open(fileName, O_CREAT | O_WRITE | O_EXCL)) 
+  if (!logfile.open(fileName, O_CREAT | O_WRITE | O_EXCL))
   {
     didWork = false;
   }
 }
 
-void initLogTime(){
+void initLogTime() {
   // Start on a multiple of the sample interval.
-  logTime = micros()/(1000UL*LOG_INTERVAL) + 1;
-  logTime *= 1000UL*LOG_INTERVAL;
+  logTime = micros() / (1000UL * LOG_INTERVAL) + 1;
+  logTime *= 1000UL * LOG_INTERVAL;
 }
 
-void initBME(){
+void initBME() {
   // Set up oversampling and filter initialization
   bme.setTemperatureOversampling(BME680_OS_8X);
   bme.setHumidityOversampling(BME680_OS_2X);
@@ -287,40 +282,53 @@ void initBME(){
   bme.setGasHeater(320, 150); // 320*C for 150 ms
 }
 
+void initRTC() {
+#ifndef ESP8266
+  while (!Serial); // for Leonardo/Micro/Zero
+#endif
+
+  if (! rtc.begin()) {
+    Serial.println("Couldn't find RTC");
+    while (1);
+  }
+  RTC.adjust(DateTime(F(__DATE__), F(__TIME__)));
+}
+
 void atmosphericSetup() {
-  if(BMEstartup()){
+  if (BMEstartup()) {
     // Ready to go (Do something with LED)
   }
-  if(SGPstartup()){
+  if (SGPstartup()) {
     // Ready to go (Do something with LED)
   }
-  if(RTCstartup){
+  if (RTCstartup) {
     // Ready to go (Do something with LED)
   }
-  if(fileSetup()){
+  if (fileSetup()) {
     // Ready to go (Do something with LED)
   }
 
   initLogTime();
   initBME();
+  initRTC();
   Serial.println("Millis,Stamp,Datetime,Temperature,Pressure,Humidity,Gas,Approx. Altitude,TVOC,eCO2,CFC,Benzene,Ozone Gas,Ozone Ref,Ozone Temp,Oxygen");
-  logString("Millis,Stamp,Datetime,Temperature,Pressure,Humidity,Gas,Approx. Altitude,TVOC,eCO2,CFC,Benzene,Ozone Gas,Ozone Ref,Ozone Temp,Oxygen");    
+  logString("Millis,Stamp,Datetime,Temperature,Pressure,Humidity,Gas,Approx. Altitude,TVOC,eCO2,CFC,Benzene,Ozone Gas,Ozone Ref,Ozone Temp,Oxygen");
 }
 
 void loop() {
   // delay for the amount of time we want between readings
-  delay((LOG_INTERVAL -1) - (millis() % LOG_INTERVAL));
+  delay((LOG_INTERVAL - 1) - (millis() % LOG_INTERVAL));
 
   String str = getAtmosphericData();
   logString(str);
-  
+
   Wire.requestFrom(NANO, 4);
   Serial.print("> Geiger: ");
   Serial.println(Wire.read());
 
   Serial.print("> Altitude: ");
   Serial.println(getAltitude());
- 
+
   Serial.println(getAtmosphericData());
 
 
