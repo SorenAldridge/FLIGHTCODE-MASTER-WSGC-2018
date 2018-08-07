@@ -287,6 +287,13 @@ void initBME(){
   bme.setGasHeater(320, 150); // 320*C for 150 ms
 }
 
+void initSGP(){
+  if (! sgp.begin()){
+    Serial.println("Sensor not found :(");
+    while (1);
+  }
+}
+
 void atmosphericSetup() {
   if(BMEstartup()){
     // Ready to go (Do something with LED)
@@ -303,6 +310,7 @@ void atmosphericSetup() {
 
   initLogTime();
   initBME();
+  initSGP();
   Serial.println("Millis,Stamp,Datetime,Temperature,Pressure,Humidity,Gas,Approx. Altitude,TVOC,eCO2,CFC,Benzene,Ozone Gas,Ozone Ref,Ozone Temp,Oxygen");
   logString("Millis,Stamp,Datetime,Temperature,Pressure,Humidity,Gas,Approx. Altitude,TVOC,eCO2,CFC,Benzene,Ozone Gas,Ozone Ref,Ozone Temp,Oxygen");    
 }
@@ -312,6 +320,13 @@ void loop() {
   delay((LOG_INTERVAL -1) - (millis() % LOG_INTERVAL));
 
   String str = getAtmosphericData();
+
+  //SGP
+  if(! sgp.IAQmeasure()){
+    Serial.println("Measurement Failed");
+    return;
+  }
+  
   logString(str);
   
   Wire.requestFrom(NANO, 4);
