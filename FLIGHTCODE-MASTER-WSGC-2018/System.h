@@ -28,6 +28,7 @@ unsigned long HANDSHAKE_KEY = 0x3b;
 
 //PINS
 int NANO_RST = 31;
+int UV_SENSOR = 8;
 
 //PREFLIGHT CHECKS
 int BLUE_LED = 38;
@@ -39,7 +40,7 @@ int PIEZO = 2;
 
 //SPACEFIRE
 Adafruit_AMG88xx amg;
-Servo myservo;
+Servo servo;
 
 float pixels[AMG88xx_PIXEL_ARRAY_SIZE];
 int SpyCamera = 4;

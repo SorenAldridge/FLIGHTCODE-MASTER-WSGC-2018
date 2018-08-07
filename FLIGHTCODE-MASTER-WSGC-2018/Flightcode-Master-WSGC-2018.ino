@@ -27,7 +27,7 @@
 #include "Adafruit_BME680.h"
 #include "Adafruit_SGP30.h"
 
-RTC_PCF8523 RTC;  
+RTC_PCF8523 RTC;
 DateTime now;
 
 void setup() {
@@ -37,7 +37,7 @@ void setup() {
   Serial.println(">>>>Performing System Checks<<<<");
   hardwareSetup();
   //initialize I2C bus
-  Wire.begin(); 
+  Wire.begin();
   //perform I2C handshake procedure
   NanoI2CHandshake();
   Serial.println("> (1/5) Nano Handshake Complete");
@@ -51,7 +51,7 @@ void setup() {
     Serial.println("Couldn't find RTC");
     while (1);
   }
-  
+
 }
 
 void hardwareSetup() {
@@ -61,30 +61,60 @@ void hardwareSetup() {
 }
 
 void spaceFireSetup() {
-  myservo.attach(SERVO_CTRL);  // attaches the servo on pin 9 to the servo object
+  servo.attach(SERVO_CTRL);  // attaches the servo on pin 9 to the servo object
   pinMode(SpyCamera, OUTPUT);
-  bool status;
-  // default settings
-  status = amg.begin();
-  if (!status) {
-    Serial.println("Could not find a valid AMG88xx sensor, check wiring!");
-    while (1);
-  }
-  delay(100); // let sensor boot up
+
+  pinMode(NICHROME_RELAY_1, OUTPUT);
+  pinMode(NICHROME_RELAY_2, OUTPUT);
+  pinMode(NICHROME_RELAY_3, OUTPUT);
+  pinMode(NICHROME_RELAY_4, OUTPUT);
+  
+  digitalWrite(SpyCamera, LOW);
+
+  digitalWrite(NICHROME_RELAY_1, HIGH);
+  digitalWrite(NICHROME_RELAY_2, HIGH);
+  digitalWrite(NICHROME_RELAY_3, HIGH);
+  digitalWrite(NICHROME_RELAY_4, HIGH);
+  
 }
 
 void runSpaceFire() {
   //add back in when quin finishes it
   //altitude = getAltitude();
-  if ((altitude > 2590 && altitude < 2650) || (altitude > 2743 && altitude > 2803) || (altitude > 2895 && altitude < 2955) || (altitude > 3050 && altitude < 3100)) {
-    servoPosition = servoPosition + servoincrement;
-    myservo.write(servoPosition);
-
-    digitalWrite(SpyCamera, LOW);
-    delay(555);
-    digitalWrite(SpyCamera, HIGH);
-
+  digitalWrite(SpyCamera, HIGH);
+  delay(555);
+  digitalWrite(SpyCamera, LOW);
+  //digitalWrite(SpyCamera, HIGH);
+  if ((altitude > 2590 && altitude < 2650)) {
+    servo.write(50);
+    digitalWrite(NICHROME_RELAY_1, LOW);
+    delay(10000);
+    digitalWrite(NICHROME_RELAY_1, HIGH);
   }
+  else if((altitude > 2743 && altitude > 2803)){
+    servo.write(40);
+    digitalWrite(NICHROME_RELAY_2, LOW);
+    delay(10000);
+    digitalWrite(NICHROME_RELAY_2, HIGH);
+  }
+  else if((altitude > 2895 && altitude < 2955) ){
+    servo.write(80);
+    digitalWrite(NICHROME_RELAY_3, LOW);
+    delay(10000);
+    digitalWrite(NICHROME_RELAY_3, HIGH);
+  }
+  else if((altitude > 3050 && altitude < 3100)){
+    servo.write(120);
+    digitalWrite(NICHROME_RELAY_4, LOW);
+    delay(10000);
+    digitalWrite(NICHROME_RELAY_4, HIGH);
+  }
+  else{
+    servo.write(0);
+  }
+  digitalWrite(SpyCamera, HIGH);
+  delay(555);
+  digitalWrite(SpyCamera, LOW);
 }
 
 //performs pre-flight check for I2C connection on the nano
@@ -103,7 +133,7 @@ bool NanoI2CHandshake() {
   Wire.requestFrom(NANO, 1);
   //get received value
   unsigned long read = Wire.read();
-  Serial.println("> KEY: "+ (String)read);
+  Serial.println("> KEY: " + (String)read);
 
   //if keys match, break out of loop
   if (read == HANDSHAKE_KEY) {
@@ -123,7 +153,7 @@ bool NanoI2CHandshake() {
 
 
 void getUVSensor() {
-  int sensorValue = analogRead(7);
+  int sensorValue = analogRead(UV_SENSOR);
   // Convert the analog reading (which goes from 0 - 1023) to a voltage (0 - 5V):
   float voltage1 = sensorValue * (3.3 / 1023);
   float voltage = voltage1 / 0.1;
@@ -136,7 +166,7 @@ void getUVSensor() {
 #define ECHO_TO_SERIAL   1              // echo data to serial port
 #define FILE_BASE_NAME "Data"           // Log file base name.  Must be six characters or less.
 
-                       // define the Real Time Clock object
+// define the Real Time Clock object
 
 uint32_t syncTime = 0;                  // time of last sync
 const int chipSelect = 10;              // for the data logging shield, we use digital pin 10 for the SD cs line
@@ -156,19 +186,19 @@ int Ozone_Temp_Pin = 2;
 int Oxygen_Pin = 3;
 
 
-void logString(String toLog){
+void logString(String toLog) {
   logfile.print(toLog);
   logfile.println();
 }
 
-String getAtmosphericData(){
+String getAtmosphericData() {
   // DateTime object
   now = RTC.now();
 
   // Log milliseconds since starting
-  uint32_t m = millis(); 
+  uint32_t m = millis();
 
-  // Read all sensors 
+  // Read all sensors
   float temp = bme.temperature;
   float pressure = bme.pressure;
   float humidity = bme.humidity;
@@ -182,103 +212,107 @@ String getAtmosphericData(){
   float ozoneRef = analogRead(Ozone_Ref_Pin);
   float ozoneTemp = analogRead(Ozone_Temp_Pin);
   float oxygenReading = analogRead(Oxygen_Pin);
-  
+
 
   // Guess what BA means
-  String BAString = String(m) + ", " + String(now.unixtime()) + ", " + String(now.year()) + "/" + String(now.month()) + "/" + String(now.day()) + " " + 
-                    String(now.hour()) + ":" + String(now.minute()) + ":" + String(now.second()) + ", "+ String(temp) + ", " + String(pressure) + ", " + 
-                    String(humidity) + ", " + String(gas_resistance) + ", " + String(altitude) + ", " + String(TVOC) + ", " + String(eCO2) + ", " + 
+  String BAString = String(m) + ", " + String(now.unixtime()) + ", " + String(now.year()) + "/" + String(now.month()) + "/" + String(now.day()) + " " +
+                    String(now.hour()) + ":" + String(now.minute()) + ":" + String(now.second()) + ", " + String(temp) + ", " + String(pressure) + ", " +
+                    String(humidity) + ", " + String(gas_resistance) + ", " + String(altitude) + ", " + String(TVOC) + ", " + String(eCO2) + ", " +
                     String(CFC_reading) + ", " + String(Benzene_reading) + ", " + String(ozoneGas) + ", " + String(ozoneRef) + ", " + String(ozoneTemp) + ", " + String(oxygenReading);
- 
+
   return BAString;
 }
 
-int getAltitude(){
+int getAltitude() {
   return bme.readAltitude(SEALEVELPRESSURE_HPA);
 }
 
-bool checkBME(){
+int setAltitude(int newAlt) {
+  altitude = newAlt;
+}
+
+bool checkBME() {
   if (! bme.performReading())
     return false;
   else
     return true;
 }
 
-bool checkSGP(){
+bool checkSGP() {
   if (! sgp.IAQmeasure())
     return false;
   else
     return true;
 }
 
-bool BMEstartup(){
+bool BMEstartup() {
   if (!bme.begin())
     return false;
-  else 
+  else
     return true;
 }
 
-bool SGPstartup(){
-  if (!sgp.begin()){
+bool SGPstartup() {
+  if (!sgp.begin()) {
     return false;
   }
-  else 
+  else
     return true;
 }
 
-bool RTCstartup(){
-  Wire.begin();  
+bool RTCstartup() {
+  Wire.begin();
   if (!RTC.begin())
     return false;
-  else{ 
+  else {
     return true;
   }
 }
 
-bool fileSetup(){
+bool fileSetup() {
   bool didWork = true;
   const uint8_t BASE_NAME_SIZE = sizeof(FILE_BASE_NAME) - 1;
   char fileName[13] = FILE_BASE_NAME "00.csv";
-  
+
   // Initialize at the highest speed supported by the board that is not over 50 MHz. Try a lower speed if SPI errors occur.
   if (!sd.begin(chipSelect, SD_SCK_MHZ(50))) {
     sd.initErrorHalt();
   }
 
   // Find an unused file name.
-  if (BASE_NAME_SIZE > 6) 
+  if (BASE_NAME_SIZE > 6)
   {
     didWork = false;
   }
-  while (sd.exists(fileName)) 
+  while (sd.exists(fileName))
   {
-    if (fileName[BASE_NAME_SIZE + 1] != '9') 
+    if (fileName[BASE_NAME_SIZE + 1] != '9')
     {
       fileName[BASE_NAME_SIZE + 1]++;
     }
-    else if (fileName[BASE_NAME_SIZE] != '9') 
+    else if (fileName[BASE_NAME_SIZE] != '9')
     {
       fileName[BASE_NAME_SIZE + 1] = '0';
       fileName[BASE_NAME_SIZE]++;
-    } 
-    else 
+    }
+    else
     {
       didWork = false;
     }
   }
-  if (!logfile.open(fileName, O_CREAT | O_WRITE | O_EXCL)) 
+  if (!logfile.open(fileName, O_CREAT | O_WRITE | O_EXCL))
   {
     didWork = false;
   }
 }
 
-void initLogTime(){
+void initLogTime() {
   // Start on a multiple of the sample interval.
-  logTime = micros()/(1000UL*LOG_INTERVAL) + 1;
-  logTime *= 1000UL*LOG_INTERVAL;
+  logTime = micros() / (1000UL * LOG_INTERVAL) + 1;
+  logTime *= 1000UL * LOG_INTERVAL;
 }
 
-void initBME(){
+void initBME() {
   // Set up oversampling and filter initialization
   bme.setTemperatureOversampling(BME680_OS_8X);
   bme.setHumidityOversampling(BME680_OS_2X);
@@ -287,24 +321,24 @@ void initBME(){
   bme.setGasHeater(320, 150); // 320*C for 150 ms
 }
 
-void initSGP(){
-  if (! sgp.begin()){
+void initSGP() {
+  if (! sgp.begin()) {
     Serial.println("Sensor not found :(");
     while (1);
   }
 }
 
 void atmosphericSetup() {
-  if(BMEstartup()){
+  if (BMEstartup()) {
     // Ready to go (Do something with LED)
   }
-  if(SGPstartup()){
+  if (SGPstartup()) {
     // Ready to go (Do something with LED)
   }
-  if(RTCstartup){
+  if (RTCstartup) {
     // Ready to go (Do something with LED)
   }
-  if(fileSetup()){
+  if (fileSetup()) {
     // Ready to go (Do something with LED)
   }
 
@@ -312,31 +346,43 @@ void atmosphericSetup() {
   initBME();
   initSGP();
   Serial.println("Millis,Stamp,Datetime,Temperature,Pressure,Humidity,Gas,Approx. Altitude,TVOC,eCO2,CFC,Benzene,Ozone Gas,Ozone Ref,Ozone Temp,Oxygen");
-  logString("Millis,Stamp,Datetime,Temperature,Pressure,Humidity,Gas,Approx. Altitude,TVOC,eCO2,CFC,Benzene,Ozone Gas,Ozone Ref,Ozone Temp,Oxygen");    
+  logString("Millis,Stamp,Datetime,Temperature,Pressure,Humidity,Gas,Approx. Altitude,TVOC,eCO2,CFC,Benzene,Ozone Gas,Ozone Ref,Ozone Temp,Oxygen");
 }
 
 void loop() {
   // delay for the amount of time we want between readings
-  delay((LOG_INTERVAL -1) - (millis() % LOG_INTERVAL));
+  delay((LOG_INTERVAL - 1) - (millis() % LOG_INTERVAL));
 
-  String str = getAtmosphericData();
-
-  //SGP
-  if(! sgp.IAQmeasure()){
-    Serial.println("Measurement Failed");
-    return;
-  }
-  
-  logString(str);
-  
+  //RADIATION
   Wire.requestFrom(NANO, 4);
   Serial.print("> Geiger: ");
   Serial.println(Wire.read());
 
+  getUVSensor();
+
+  //ATMOSPHERIC
   Serial.print("> Altitude: ");
   Serial.println(getAltitude());
- 
+
+  //SGP SENSOR START
+  if (! sgp.IAQmeasure()) {
+    Serial.println("Measurement Failed");
+    return;
+  }
+
+  // Force data to SD and update the directory entry to avoid data loss.
+  if (!logfile.sync() || logfile.getWriteError()) {
+    Serial.println("write error");
+  }
+  
+  String str = getAtmosphericData();
+  logString(str);
   Serial.println(getAtmosphericData());
+
+  //SPACE FIRE
+  setAltitude(2593);
+  runSpaceFire();
+  
 
 
   // Now we write data to disk! Don't sync too often - requires 2048 bytes of I/O to SD card
