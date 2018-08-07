@@ -29,6 +29,7 @@
 
 RTC_PCF8523 RTC;
 DateTime now;
+int fire;
 
 void setup() {
   Serial.begin(9600);
@@ -43,7 +44,8 @@ void setup() {
   Serial.println("> (1/5) Nano Handshake Complete");
   atmosphericSetup();
   spaceFireSetup();
-
+  toggleCamera();
+  
   //SYNC RTC CLOCK
   RTC.adjust(DateTime(F(__DATE__), F(__TIME__)));
   now = RTC.now();
@@ -63,58 +65,77 @@ void hardwareSetup() {
 void spaceFireSetup() {
   servo.attach(SERVO_CTRL);  // attaches the servo on pin 9 to the servo object
   pinMode(SpyCamera, OUTPUT);
+  servo.write(20);
 
   pinMode(NICHROME_RELAY_1, OUTPUT);
   pinMode(NICHROME_RELAY_2, OUTPUT);
   pinMode(NICHROME_RELAY_3, OUTPUT);
   pinMode(NICHROME_RELAY_4, OUTPUT);
-  
-  digitalWrite(SpyCamera, LOW);
+
+  digitalWrite(SpyCamera, HIGH);
 
   digitalWrite(NICHROME_RELAY_1, HIGH);
   digitalWrite(NICHROME_RELAY_2, HIGH);
   digitalWrite(NICHROME_RELAY_3, HIGH);
   digitalWrite(NICHROME_RELAY_4, HIGH);
-  
+
+}
+
+bool stage1 = true, stage2 = true, stage3 = true, stage4 = true;
+
+void toggleCamera() {
+  digitalWrite(SpyCamera, HIGH);
+  delay(20);
+  digitalWrite(SpyCamera, LOW);
+  delay(650);
+  digitalWrite(SpyCamera, HIGH);
 }
 
 void runSpaceFire() {
   //add back in when quin finishes it
-  //altitude = getAltitude();
-  digitalWrite(SpyCamera, HIGH);
-  delay(555);
-  digitalWrite(SpyCamera, LOW);
-  //digitalWrite(SpyCamera, HIGH);
-  if ((altitude > 2590 && altitude < 2650)) {
-    servo.write(50);
+  altitude = getAltitude();
+
+  if ((altitude > 2590 && altitude < 2650) && stage1) {
+    fire = 1;
+    //turn on relay for 3.5 seconds and move servo
     digitalWrite(NICHROME_RELAY_1, LOW);
-    delay(10000);
+    servo.write(20);
+    delay(3500);
     digitalWrite(NICHROME_RELAY_1, HIGH);
+
+    stage1 = false;
   }
-  else if((altitude > 2743 && altitude > 2803)){
-    servo.write(40);
+  else if ((altitude > 2743 && altitude > 2803) && stage2) {
+    fire = 1;
+    //turn on relay for 3.5 seconds and move servo
     digitalWrite(NICHROME_RELAY_2, LOW);
-    delay(10000);
+    servo.write(75);
+    delay(3500);
     digitalWrite(NICHROME_RELAY_2, HIGH);
+    
+    stage2 = false;
   }
-  else if((altitude > 2895 && altitude < 2955) ){
-    servo.write(80);
+  else if ((altitude > 2895 && altitude < 2955) && stage3) {
+    fire = 1;
+    //turn on relay for 3.5 seconds and move servo
     digitalWrite(NICHROME_RELAY_3, LOW);
-    delay(10000);
+    servo.write(110);
+    delay(3500);
     digitalWrite(NICHROME_RELAY_3, HIGH);
+
+    stage3 = false;
   }
-  else if((altitude > 3050 && altitude < 3100)){
-    servo.write(120);
+  else if ((altitude > 3050 && altitude < 3100) && stage4) {
+    fire = 1;
+    //turn on relay for 3.5 seconds and move serv
     digitalWrite(NICHROME_RELAY_4, LOW);
-    delay(10000);
+    servo.write(180);
+    delay(3500);
     digitalWrite(NICHROME_RELAY_4, HIGH);
+    
+    stage4 = false;
   }
-  else{
-    servo.write(0);
-  }
-  digitalWrite(SpyCamera, HIGH);
-  delay(555);
-  digitalWrite(SpyCamera, LOW);
+  fire = 0;
 }
 
 //performs pre-flight check for I2C connection on the nano
@@ -151,13 +172,12 @@ bool NanoI2CHandshake() {
   return handshake;
 }
 
-
-void getUVSensor() {
+float getUVSensor() {
   int sensorValue = analogRead(UV_SENSOR);
   // Convert the analog reading (which goes from 0 - 1023) to a voltage (0 - 5V):
   float voltage1 = sensorValue * (3.3 / 1023);
   float voltage = voltage1 / 0.1;
-  Serial.println(voltage);
+  return voltage;
 }
 
 #define SEALEVELPRESSURE_HPA (1015.1)  // change this number based upon the forcast that day
@@ -346,8 +366,11 @@ void atmosphericSetup() {
   initBME();
   initSGP();
   Serial.println("Millis,Stamp,Datetime,Temperature,Pressure,Humidity,Gas,Approx. Altitude,TVOC,eCO2,CFC,Benzene,Ozone Gas,Ozone Ref,Ozone Temp,Oxygen");
-  logString("Millis,Stamp,Datetime,Temperature,Pressure,Humidity,Gas,Approx. Altitude,TVOC,eCO2,CFC,Benzene,Ozone Gas,Ozone Ref,Ozone Temp,Oxygen");
+  logString("Millis,Stamp,Datetime,Temperature,Pressure,Humidity,Gas,Approx. Altitude,TVOC,eCO2,CFC,Benzene,Ozone Gas,Ozone Ref,Ozone Temp,Oxygen,DPM,UV,fire");
 }
+
+int DPM;
+float UV;
 
 void loop() {
   // delay for the amount of time we want between readings
@@ -355,15 +378,9 @@ void loop() {
 
   //RADIATION
   Wire.requestFrom(NANO, 4);
-  Serial.print("> Geiger: ");
-  Serial.println(Wire.read());
-
-  getUVSensor();
-
-  //ATMOSPHERIC
-  Serial.print("> Altitude: ");
-  Serial.println(getAltitude());
-
+  DPM = Wire.read();
+  UV = getUVSensor();
+  
   //SGP SENSOR START
   if (! sgp.IAQmeasure()) {
     Serial.println("Measurement Failed");
@@ -374,16 +391,14 @@ void loop() {
   if (!logfile.sync() || logfile.getWriteError()) {
     Serial.println("write error");
   }
-  
+
   String str = getAtmosphericData();
-  logString(str);
-  Serial.println(getAtmosphericData());
-
-  //SPACE FIRE
-  setAltitude(2593);
-  runSpaceFire();
+  str += (String)DPM + ", ";
+  str += (String)UV + ", ";
+  str += (String)fire;
   
-
+  logString(str);
+  Serial.println(str);
 
   // Now we write data to disk! Don't sync too often - requires 2048 bytes of I/O to SD card
   // which uses a bunch of power and takes time

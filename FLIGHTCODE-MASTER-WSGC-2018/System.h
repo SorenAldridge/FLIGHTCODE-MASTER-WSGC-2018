@@ -43,7 +43,7 @@ Adafruit_AMG88xx amg;
 Servo servo;
 
 float pixels[AMG88xx_PIXEL_ARRAY_SIZE];
-int SpyCamera = 4;
+int SpyCamera = 52;
 int altitude;
 int servoPosition = 0;
 int servoincrement = 40;
@@ -52,8 +52,8 @@ int SERVO_CTRL = 22;
 
 int NICHROME_RELAY_1 = 23;
 int NICHROME_RELAY_2 = 24;
-int NICHROME_RELAY_3 = 25;
-int NICHROME_RELAY_4 = 26;
+int NICHROME_RELAY_3 = 26;
+int NICHROME_RELAY_4 = 25;
 
 //I2C ADDRESSES
 int NANO = 8;
