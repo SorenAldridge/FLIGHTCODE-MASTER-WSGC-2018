@@ -53,7 +53,8 @@ void setup() {
     Serial.println("Couldn't find RTC");
     while (1);
   }
-
+  //ALL GOOD
+  tone(PIEZO, 420, 500);
 }
 
 void hardwareSetup() {
@@ -135,7 +136,6 @@ void runSpaceFire() {
     
     stage4 = false;
   }
-  fire = 0;
 }
 
 //performs pre-flight check for I2C connection on the nano
@@ -180,7 +180,7 @@ float getUVSensor() {
   return voltage;
 }
 
-#define SEALEVELPRESSURE_HPA (1015.1)  // change this number based upon the forcast that day
+#define SEALEVELPRESSURE_HPA (1013.25)  // change this number based upon the forcast that day
 #define LOG_INTERVAL  1000              // mills between entries
 #define SYNC_INTERVAL 1000              // mills between calls to flush() - to write data to the card
 #define ECHO_TO_SERIAL   1              // echo data to serial port
@@ -391,7 +391,8 @@ void loop() {
   if (!logfile.sync() || logfile.getWriteError()) {
     Serial.println("write error");
   }
-
+  fire = 0;
+  runSpaceFire();
   String str = getAtmosphericData();
   str += (String)DPM + ", ";
   str += (String)UV + ", ";
